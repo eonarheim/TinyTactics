@@ -20,8 +20,8 @@ var Board = ex.Actor.extend({
 
    addUnit: function(x, y, unit){
       this.units[x + y * this.cols] = unit;
-      unit.x = x * (this.tileWidth + this.margin) + this.tileWidth/2;
-      unit.y = y * (this.tileHeight + this.margin) + this.tileHeight/2;
+      unit.x = x * (this.tileWidth + this.margin) + this.tileWidth/2 + this.margin;
+      unit.y = y * (this.tileHeight + this.margin) + this.tileHeight/2 + this.margin;
       unit.width = this.tileWidth;
       unit.height = this.tileHeight;
       this.addChild(unit);
@@ -43,16 +43,22 @@ var Board = ex.Actor.extend({
    draw: function(ctx, delta){
       var currx = this.margin;
       var curry = this.margin;
+
+      var unitsToDraw = [];
       for(var i = 0; i < this.cols; i++){
          for(var j = 0; j < this.rows; j++){
             ctx.fillStyle = ex.Color.Green.toString();
             ctx.fillRect(currx, curry, this.tileWidth, this.tileHeight);
 
             // if a unit is on a square draw it
-            var unit = null;
-            if(unit = this.getUnit(i, j)){               
-               unit.draw(ctx, delta);               
-            }
+            var that = this;
+            (function(){
+               var unit = null;
+               if(unit = that.getUnit(i, j)){               
+                  unitsToDraw.push(unit);
+                 
+               }
+            })();
 
 
             curry += (this.tileHeight + this.margin);
@@ -60,5 +66,9 @@ var Board = ex.Actor.extend({
          curry = this.margin; // restart the y's to the top
          currx += (this.tileWidth + this.margin);
       }
+
+      unitsToDraw.forEach(function(unit){
+          unit.draw(ctx, delta);
+      });
    }
 });

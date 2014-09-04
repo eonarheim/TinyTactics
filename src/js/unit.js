@@ -6,13 +6,14 @@ var Unit = ex.Actor.extend({
       this.health = health;
       this.range = range;
       this.selected = false;
-      this.addDrawing("default", spriteSheet.getSprite(0));
+      this.addDrawing("default", spriteSheet.getSprite(0).clone());
+      this.setCenterDrawing(true);
 
       this.on('click', function(){
          this.selected = !this.selected;
          console.log('Unit owned by ' + this.owner + ' was clicked and is now ' + (this.selected?'':'not ') + 'selected');
          if(this.selected){
-            this.currentDrawing.addEffect(new ex.Effects.Colorize(ex.Color.Red));
+            this.currentDrawing.addEffect(new ex.Effects.Colorize(ex.Color.Blue));
          }else{
             this.currentDrawing.clearEffects();
          }

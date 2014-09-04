@@ -14,7 +14,9 @@ game.add(board);
 game.start(loader).then(function(){
    console.log("Loaded!");
    var newUnit = new Unit(unitSpriteSheet, 100, 2, "player1");
+   var newUnit2 = new Unit(unitSpriteSheet, 100, 2, "player1");
    board.addUnit(3,0, newUnit);
+   board.addUnit(2,5, newUnit2);
 }).error(function(e){
    console.error("Error loading resources:" + e);
 });
