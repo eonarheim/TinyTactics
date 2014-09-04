@@ -2,22 +2,43 @@ var Unit = ex.Actor.extend({
    constructor: function(spriteSheet, health, range, owner){
       // Call the super constructor
       ex.Actor.apply(this);
+      this.cell = null;
       this.owner = owner;
       this.health = health;
       this.range = range;
-      this.selected = false;
+
+      this.anchor = new ex.Point(.5, 1);
       this.addDrawing("default", spriteSheet.getSprite(0).clone());
       this.setCenterDrawing(true);
+    
+   },
 
-      this.on('click', function(){
-         this.selected = !this.selected;
-         console.log('Unit owned by ' + this.owner + ' was clicked and is now ' + (this.selected?'':'not ') + 'selected');
-         if(this.selected){
-            this.currentDrawing.addEffect(new ex.Effects.Colorize(ex.Color.Blue));
-         }else{
-            this.currentDrawing.clearEffects();
+   _getRangeHelper: function(cell, accum, range){
+      
+      if(range >= 0){
+         if(!cell.solid){
+            accum.push(cell);
+            var that = this;
+            cell.getNeighbors().forEach(function(cell){
+               that._getRangeHelper(cell, accum, range - 1);
+            });
          }
-      });
+      }
+   },
+
+   getMovementRange: function(){
+      if(this.cell){
+         var accum = [];
+         this._getRangeHelper(this.cell, accum, this.range);
+         return accum.reduce(function(accum, cur){
+            if(accum.indexOf(cur) === -1){
+               accum.push(cur);
+            }
+            return accum;
+         }, []);
+      }
+      return [];
+
    },
    draw: function(ctx, delta){
       // Call super draw
