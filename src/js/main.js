@@ -10,7 +10,7 @@ var grassSpriteSheet = new ex.SpriteSheet(Resources.GrassSpriteSheet, 1, 1, 32, 
 
 var board = new Board(32, 32, 2, 6, 6);
 game.add(board);
-
+game.camera.setFocus(board.getCenter().x, board.getCenter().y);
 
 
 game.start(loader).then(function(){

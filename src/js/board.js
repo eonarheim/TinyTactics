@@ -15,6 +15,8 @@ var Board = ex.Actor.extend({
 
       // Current selection
       this.selection = null;
+      this.currentUnitRange = [];
+      this.currentUnitPath = [];
       
       // Draw params
       this.tileWidth = tileWidth;
@@ -42,8 +44,20 @@ var Board = ex.Actor.extend({
          console.log('Cell clicked', cell);
          if(this.selection != cell){
             this.selection = cell;
+            if(this.selection.unit){
+               this.currentUnitRange = this.selection.unit.getMovementRange();
+            }
          }else{
             this.selection = null;
+         }
+      });
+
+      this.on('mousemove', function(mouse){
+         var cell = this.getCellFromClick(mouse.x, mouse.y);
+         if(this.selection && this.selection.unit && cell && this.currentUnitRange.indexOf(cell) > -1){
+            this.currentUnitPath = this.findPath(this.selection, cell);
+         }else{
+            this.currentUnitPath = [];
          }
       });
    },
@@ -82,6 +96,86 @@ var Board = ex.Actor.extend({
       var potentialCell = this.getCell(x,y);
       if(potentialCell) return potentialCell.unit;
       return null;
+   },
+
+   findPath: function(startCell, endCell){
+      // clear nodes of pre-existing values
+      this.cells.forEach(function(cell){
+         cell.gscore = 0;
+         cell.hscore = 0;
+         cell.opened = false;
+      });
+      
+      // Define heuristic function
+      var heuristicWeight = 1.0;
+      var _euclideanHeuristic = function(start, end){
+         return Math.sqrt(Math.pow(start.x -end.x,2) + Math.pow(start.y - end.y,2));
+      };
+
+      // Path builder
+      var _buildPath = function(current){
+         var path = [];
+         while(current.previousNode){
+            path.unshift(current);
+            current = current.previousNode;
+         }
+         path.unshift(current);
+         return path;
+      };
+
+      var heuristicFcn = _euclideanHeuristic;      
+      var startingNode = startCell;
+      var endingNode = endCell;
+
+      startingNode.gscore = 0;
+      startingNode.hscore = startingNode.gscore + heuristicFcn(startingNode, endingNode) * heuristicWeight;
+
+      var openNodes = [startingNode];
+      var closeNodes = [];
+      var path = {};
+      var bestPathScore = 0;
+
+      while(openNodes.length > 0){
+         var current = openNodes.sort(function(a,b){
+            return a.hscore - b.hscore;
+         })[0];
+
+
+         // Done!
+         if(current == endingNode){
+            //console.log("DONE!");
+            var finishedPath = _buildPath(current);
+            //console.log(finishedPath);
+            return finishedPath;
+         }
+
+         // Remove current from the open node set
+         var index = openNodes.indexOf(current);
+         openNodes.splice(index,1);
+         closeNodes.push(current);
+
+
+         // Find the neighbors
+         var neighbors = current.getNeighbors().filter(function(node){
+            return !node.solid;
+         }).filter(function(node){
+            return closeNodes.indexOf(node) === -1;
+         });
+         
+
+         neighbors.forEach(function(node){
+
+            if(openNodes.indexOf(node) === -1){
+               node.previousNode = current;
+               node.gscore = node.weight + current.gscore;
+               node.hscore = node.gscore + heuristicFcn(node, endingNode) * heuristicWeight;
+
+               openNodes.push(node);
+            }
+
+         });
+
+      }
    },
 
    draw: function(ctx, delta){
@@ -123,8 +217,14 @@ var Board = ex.Actor.extend({
       // Draw movement range of unit
       if(this.selection && this.selection.unit){
          this.selection.unit.getMovementRange().forEach(function(cell){
-            cell.drawHighlight(ctx, delta);
+            cell.drawHighlight(ctx, ex.Color.Red, delta);
          });
+
+         if(this.currentUnitPath && this.currentUnitPath.length){
+            this.currentUnitPath.forEach(function(cell){
+               cell.drawHighlight(ctx, ex.Color.Blue, delta);
+            });
+         }
       }
 
       ctx.restore();
