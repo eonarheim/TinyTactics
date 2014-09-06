@@ -1,5 +1,5 @@
 var Unit = ex.Actor.extend({
-   constructor: function(spriteSheet, health, range, owner){
+   constructor: function(spriteSheet, engine, health, range, owner){
       // Call the super constructor
       ex.Actor.apply(this);
       this.cell = null;
@@ -8,8 +8,14 @@ var Unit = ex.Actor.extend({
       this.range = range;
 
       this.anchor = new ex.Point(.5, 1);
-      this.addDrawing("default", spriteSheet.getSprite(0).clone());
+      var animation = spriteSheet.getAnimationForAll(engine, 200);
+      animation.loop = true;
+      this.addDrawing("default", animation);
       this.setCenterDrawing(true);
+
+      this.pipeline = [];
+      this.pipeline.push(new ex.MovementModule());
+      this.pipeline.push(new ex.EventPropagationModule());
     
    },
 

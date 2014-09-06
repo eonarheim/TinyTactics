@@ -15,6 +15,7 @@ var Board = ex.Actor.extend({
 
       // Current selection
       this.selection = null;
+      this.moveMode = false;
       this.currentUnitRange = [];
       this.currentUnitPath = [];
       
@@ -43,10 +44,16 @@ var Board = ex.Actor.extend({
          var cell = this.getCellFromClick(click.x, click.y);
          console.log('Cell clicked', cell);
          if(this.selection != cell){
-            this.selection = cell;
-            if(this.selection.unit){
-               this.currentUnitRange = this.selection.unit.getMovementRange();
+            if(cell.unit){
+               this.currentUnitRange = cell.unit.getMovementRange();
+               this.moveMode = true;              
+            }else if(this.moveMode){
+               if(this.currentUnitPath.indexOf(cell) > -1){
+                  this.moveSelectedUnit(cell);  
+
+               }
             }
+            this.selection = cell;
          }else{
             this.selection = null;
          }
@@ -56,6 +63,7 @@ var Board = ex.Actor.extend({
          var cell = this.getCellFromClick(mouse.x, mouse.y);
          if(this.selection && this.selection.unit && cell && this.currentUnitRange.indexOf(cell) > -1){
             this.currentUnitPath = this.findPath(this.selection, cell);
+
          }else{
             this.currentUnitPath = [];
          }
@@ -97,6 +105,34 @@ var Board = ex.Actor.extend({
       if(potentialCell) return potentialCell.unit;
       return null;
    },
+   setUnit: function(x, y, unit){
+      unit.cell.unit = null;
+      unit.cell = null;
+
+
+      var index = x + y * this.cols;      
+      unit.cell = this.cells[index];
+      this.cells[index].unit = unit;
+   },
+   moveSelectedUnit: function(destCell){
+      var that = this;
+      var destCell = destCell;
+      this.currentUnitPath.forEach(function(cell){
+         var cellCenter = cell.getCenterPoint();
+         that.selection.unit.moveTo(cellCenter.x, cellCenter.y, 80);
+         that.selection.unit.delay(100);
+      });
+      this.selection.unit.callMethod(function(){
+         that.setUnit(destCell.x, destCell.y, this);
+         that.moveMode = false;
+         that.currentUnitPath = [];
+         that.currentUnitRange = [];
+         that.selection = null;
+      
+         console.log("Done moving unit to", destCell, "from", that.selection);
+      });
+     
+   },
 
    findPath: function(startCell, endCell){
       // clear nodes of pre-existing values
@@ -104,6 +140,7 @@ var Board = ex.Actor.extend({
          cell.gscore = 0;
          cell.hscore = 0;
          cell.opened = false;
+         cell.previousNode = null;
       });
       
       // Define heuristic function
@@ -190,7 +227,7 @@ var Board = ex.Actor.extend({
       var unitsToDraw = [];
       for(var i = 0; i < this.cols; i++){
          for(var j = 0; j < this.rows; j++){
-            this.getCell(i, j).draw(ctx);
+            this.getCell(i, j).draw(ctx, delta);
 
             // if a unit is on a square draw it
             var that = this;
