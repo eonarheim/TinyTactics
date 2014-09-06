@@ -1,4 +1,5 @@
 var game = new ex.Engine(800, 800, 'game');
+game.backgroundColor = ex.Color.Azure;
 
 var loader = new ex.Loader();
 for(key in Resources){
@@ -7,10 +8,17 @@ for(key in Resources){
 
 var unitSpriteSheet = new ex.SpriteSheet(Resources.UnitSpriteSheet, 4, 1, 32, 32);
 var terrainSheet = new ex.SpriteSheet(Resources.TerrainSheet, 5, 5, 32, 32);
+var cloudSheet = new ex.SpriteSheet(Resources.CloudSheet, 1, 1, 100, 100);
+
+game.add(new Cloud(800, 0));
+game.add(new Cloud(400, 300));
+game.add(new Cloud(700, 700));
 
 var board = new Board(32, 32, 2, 6, 6);
 game.add(board);
 game.camera.setFocus(board.getCenter().x, board.getCenter().y);
+
+
 
 game.on('keydown', function(e){
    if(e.key === ex.InputKey.D){
