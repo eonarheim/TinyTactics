@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="30" height="20" tilewidth="32" tileheight="32" backgroundcolor="#007fff">
+ <tileset firstgid="1" name="Terrain" tilewidth="32" tileheight="32">
+  <image source="../img/TerrainSheet.png" width="160" height="160"/>
+ </tileset>
+ <layer name="Level" width="30" height="20">
+  <data encoding="base64" compression="zlib">
+   eJztktsKwCAMQ11h/v8nj8ECIbSCs4499EDwQkms2lpRzGHJXpGfOXWr2cfjgVE9dc+CutlMFfx07tVkZXLvt05HWXfM6oM8aLVf0ElYj7Kjf/A2W8/B97Cj3+gcLH2L3Wj+F5lF8Ucu1D8BPQ==
+  </data>
+ </layer>
+ <objectgroup color="#9100a4" name="Object Layer 1" width="30" height="20">
+  <properties>
+   <property name="Camera" value=""/>
+  </properties>
+  <object name="Camera" type="Camera" x="336" y="272">
+   <ellipse/>
+  </object>
+ </objectgroup>
+</map>

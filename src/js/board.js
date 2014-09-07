@@ -44,13 +44,13 @@ var Board = ex.Actor.extend({
          var cell = this.getCellFromClick(click.x, click.y);
          console.log('Cell clicked', cell);
          if(this.selection != cell){
-            if(cell.unit){
+            if(cell && cell.unit){
                this.currentUnitRange = cell.unit.getMovementRange();
-               this.moveMode = true;              
+               this.moveMode = true;
+               Resources.SelectSound.play();
             }else if(this.moveMode){
                if(this.currentUnitPath.indexOf(cell) > -1){
-                  this.moveSelectedUnit(cell);  
-
+                  this.moveSelectedUnit(cell); 
                }
             }
             this.selection = cell;
@@ -120,6 +120,9 @@ var Board = ex.Actor.extend({
       this.currentUnitPath.forEach(function(cell){
          var cellCenter = cell.getCenterPoint();
          that.selection.unit.moveTo(cellCenter.x, cellCenter.y, 80);
+         that.selection.unit.callMethod(function(){
+            Resources.MoveSound.play();
+         });
          that.selection.unit.delay(100);
       });
       this.selection.unit.callMethod(function(){
