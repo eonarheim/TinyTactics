@@ -249,23 +249,25 @@ var Board = ex.Actor.extend({
          currx += (this.tileWidth + this.margin);
       }
 
-      // Draw units
-      unitsToDraw.forEach(function(unit){
-          unit.draw(ctx, delta);
-      });
+     
 
       // Draw movement range of unit
       if(this.selection && this.selection.unit){
          this.selection.unit.getMovementRange().forEach(function(cell){
-            cell.drawHighlight(ctx, ex.Color.Red, delta);
+            cell.drawHighlight(ctx, "light", delta);
          });
 
          if(this.currentUnitPath && this.currentUnitPath.length){
             this.currentUnitPath.forEach(function(cell){
-               cell.drawHighlight(ctx, ex.Color.Blue, delta);
+               cell.drawHighlight(ctx, "dark", delta);
             });
          }
       }
+
+       // Draw units
+      unitsToDraw.forEach(function(unit){
+          unit.draw(ctx, delta);
+      });
 
       ctx.restore();
    }

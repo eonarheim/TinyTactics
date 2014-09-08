@@ -9,6 +9,17 @@ for(key in Resources){
 var unitSpriteSheet = new ex.SpriteSheet(Resources.UnitSpriteSheet, 4, 1, 32, 32);
 var terrainSheet = new ex.SpriteSheet(Resources.TerrainSheet, 5, 5, 32, 32);
 var cloudSheet = new ex.SpriteSheet(Resources.CloudSheet, 1, 1, 100, 100);
+var highlightSheet = new ex.SpriteSheet(Resources.HighlightSheet, 5, 1, 32, 32);
+
+var darkHighlight = highlightSheet.getAnimationForAll(game, 100);
+darkHighlight.loop = true;
+darkHighlight.addEffect(new ex.Effects.Colorize(ex.Color.Red));
+darkHighlight.addEffect(new ex.Effects.Opacity(.75));
+
+var lightHighlight = highlightSheet.getAnimationForAll(game, 100);
+lightHighlight.loop = true;
+lightHighlight.addEffect(new ex.Effects.Opacity(.75));
+
 
 game.add(new Cloud(800, 0));
 game.add(new Cloud(400, 300));

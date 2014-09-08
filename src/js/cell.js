@@ -6,6 +6,8 @@ var Cell = function(x, y, board){
    me.unit = null;
    me.solid = false;
    me.image = terrainSheet.getSprite(ex.Util.randomIntInRange(0,5)).clone();
+   me.darkHighlight = darkHighlight;
+   me.lightHighlight = lightHighlight;
    me.gscore = 0;
    me.hscore = 0;
    me.opened = false;
@@ -42,10 +44,13 @@ var Cell = function(x, y, board){
    }
 
    me.drawHighlight = function(ctx, color, delta){
-      var color = color.clone();
-      color.a = .5;
-      ctx.fillStyle = color.toString();
-      ctx.fillRect(me.x * (board.tileWidth + board.margin) + board.margin, me.y * (board.tileHeight + board.margin)+ board.margin, board.tileWidth, board.tileHeight);
+
+      if(color === 'dark'){
+         this.darkHighlight.draw(ctx, me.x * (board.tileWidth + board.margin) + board.margin, me.y * (board.tileHeight + board.margin)+ board.margin);
+      }else{
+         this.lightHighlight.draw(ctx, me.x * (board.tileWidth + board.margin) + board.margin, me.y * (board.tileHeight + board.margin)+ board.margin);
+      }
+      //ctx.fillRect(me.x * (board.tileWidth + board.margin) + board.margin, me.y * (board.tileHeight + board.margin)+ board.margin, board.tileWidth, board.tileHeight);
    }
 
    return me;
