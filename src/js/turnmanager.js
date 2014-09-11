@@ -8,15 +8,25 @@ var TurnManager = function(board, players){
    me.currentPlayer = players[me.currentPlayerIndex];
    me.currentTurnMovedUnits = [];
 
+   console.log(me.currentPlayer, "Turn",me.turnNumber);
+
 
    me.getPlayerUnits = function(playerName){
       return me.board.sceneNode.children.filter(function(unit){
-         unit.owner === playerName;
+         return unit.owner === playerName;
       });
    }
 
    me.getCurrentPlayerUnits = function(){
-      me.getPlayerUnits(me.currentPlayer);
+      return me.getPlayerUnits(me.currentPlayer);
+   }
+
+   me.canMoveUnit = function(unit){
+      return me.getCurrentPlayerUnits().indexOf(unit) !== -1;
+   }
+
+   me.moveUnit = function(unit, destCell){
+      // todo handle unit movement here
    }
 
    me.endTurn = function(){
@@ -24,6 +34,15 @@ var TurnManager = function(board, players){
       me.currentPlayerIndex = (me.currentPlayerIndex+1)%me.players.length;
       me.currentPlayer = me.players[me.currentPlayerIndex];
       me.currentTurnMovedUnits = [];
+      console.log(me.currentPlayer, "Turn",me.turnNumber);
+   }
+
+   me.getMovesLeft = function(){
+      return me.getCurrentPlayerUnits().length - me.currentTurnMovedUnits.length;
+   }
+
+   me.runAI = function(){
+
    }
 
 

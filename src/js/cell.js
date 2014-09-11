@@ -18,7 +18,7 @@ var Cell = function(x, y, board){
    me.count = 0;
 
    me.getCenterPoint = function(){
-      return new ex.Point(me.x*(board.tileWidth + board.margin) + board.tileWidth/2, me.y*(board.tileHeight + board.margin) + board.tileHeight/2);
+      return new ex.Point(me.x*(board.tileWidth + board.margin) + board.tileWidth/2 +board.margin, me.y*(board.tileHeight + board.margin) + board.tileHeight/2+board.margin);
    }
 
    me.getNeighbors = function(){
@@ -31,16 +31,7 @@ var Cell = function(x, y, board){
    }
 
    me.draw = function(ctx, delta){
-
       me.image.draw(ctx, me.x * (board.tileWidth + board.margin)+ board.margin, me.y * (board.tileHeight + board.margin)+ board.margin);
-    /*  me.count += delta;
-      if(me.count > me.shiftDuration){
-         me.currentShift += me.direction;
-         if(Math.abs(me.currentShift) > me.shiftMax){
-            me.direction *= -1;
-         }
-         me.count = 0;
-      }      */
    }
 
    me.drawHighlight = function(ctx, color, delta){
@@ -50,7 +41,6 @@ var Cell = function(x, y, board){
       }else{
          this.lightHighlight.draw(ctx, me.x * (board.tileWidth + board.margin) + board.margin, me.y * (board.tileHeight + board.margin)+ board.margin);
       }
-      //ctx.fillRect(me.x * (board.tileWidth + board.margin) + board.margin, me.y * (board.tileHeight + board.margin)+ board.margin, board.tileWidth, board.tileHeight);
    }
 
    return me;

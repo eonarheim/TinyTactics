@@ -1,12 +1,14 @@
 var Unit = ex.Actor.extend({
-   constructor: function(spriteSheet, engine, health, range, owner){
+   constructor: function(spriteSheet, engine, health, range, attackRange, owner){
       // Call the super constructor
       ex.Actor.apply(this);
       this.cell = null;
       this.owner = owner;
       this.health = health;
       this.range = range;
+      this.attackRange = attackRange;
 
+      this.heartSheet = heartSheet;
       this.anchor = new ex.Point(.5, 1);
       var animation = spriteSheet.getAnimationForAll(engine, 200);
       animation.loop = true;
@@ -49,6 +51,9 @@ var Unit = ex.Actor.extend({
    draw: function(ctx, delta){
       // Call super draw
       ex.Actor.prototype.draw.apply(this, [ctx, delta]);
+      this.heartSheet.getSprite(this.health).draw(ctx, this.x-5, this.y-5);
+
+
 /*
       if(this.selected){
          for(var i = 0; i < range; i++){

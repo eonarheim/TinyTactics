@@ -4,6 +4,9 @@ var Board = ex.Actor.extend({
       // Call super constructor
       ex.Actor.apply(this);
 
+      // Turn managment
+      this.turnManager = null;
+
       // TODO: Fix this crap
       this.anchor = new ex.Point(0, 0);
       this.x = 20;
@@ -40,20 +43,23 @@ var Board = ex.Actor.extend({
       this.pipeline.push(new ex.EventPropagationModule());
 
       // Initialize click events
+      // TODO THIS SUCKS!!!!  FIX IT     
       this.on('click', function(click){
          var cell = this.getCellFromClick(click.x, click.y);
-         console.log('Cell clicked', cell);
+         //console.log('Cell clicked', cell);
          if(this.selection != cell){
-            if(cell && cell.unit){
-               this.currentUnitRange = cell.unit.getMovementRange();
-               this.moveMode = true;
-               Resources.SelectSound.play();
-            }else if(this.moveMode){
-               if(this.currentUnitPath.indexOf(cell) > -1){
-                  this.moveSelectedUnit(cell); 
+            if(this.turnManager.canMoveUnit(cell.unit) || this.moveMode){
+               if(cell && cell.unit){
+                     this.currentUnitRange = cell.unit.getMovementRange();
+                     this.moveMode = true;
+                     Resources.SelectSound.play();
+               }else if(this.moveMode){
+                  if(this.currentUnitPath.indexOf(cell) > -1){
+                     this.moveSelectedUnit(cell); 
+                  }
                }
+               this.selection = cell;
             }
-            this.selection = cell;
          }else{
             this.selection = null;
          }
@@ -132,8 +138,12 @@ var Board = ex.Actor.extend({
          that.currentUnitRange = [];
          that.selection = null;
       
-         console.log("Done moving unit to", destCell, "from", that.selection);
+         //console.log("Done moving unit to", destCell, "from", that.selection);
       });
+      this.turnManager.currentTurnMovedUnits.push(this.selection.unit);
+      if(this.turnManager.getMovesLeft()===0){
+         this.turnManager.endTurn();
+      }
      
    },
 
