@@ -1,3 +1,6 @@
 [submodule "excalibur"]
 	path = excalibur
 	url = git://github.com/excaliburjs/Excalibur.git
+[submodule "typestate"]
+	path = typestate
+	url = git://github.com/eonarheim/TypeState.git
