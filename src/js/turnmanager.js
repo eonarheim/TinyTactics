@@ -22,7 +22,7 @@ var TurnManager = function(board, players){
    }
 
    me.canMoveUnit = function(unit){
-      return me.getCurrentPlayerUnits().indexOf(unit) !== -1;
+      return me.getCurrentPlayerUnits().indexOf(unit) !== -1 && !unit.moveComplete;
    }
 
    me.moveUnit = function(unit, destCell){
@@ -30,15 +30,25 @@ var TurnManager = function(board, players){
    }
 
    me.endTurn = function(){
+      
       me.turnNumber++;
       me.currentPlayerIndex = (me.currentPlayerIndex+1)%me.players.length;
       me.currentPlayer = me.players[me.currentPlayerIndex];
       me.currentTurnMovedUnits = [];
-      console.log(me.currentPlayer, "Turn",me.turnNumber);
+      console.log(me.currentPlayer, "Turn", me.turnNumber);
+      me.getCurrentPlayerUnits().forEach(function(u){
+         u.moveComplete = false;
+      });
    }
 
    me.getMovesLeft = function(){
-      return me.getCurrentPlayerUnits().length - me.currentTurnMovedUnits.length;
+      return me.getCurrentPlayerUnits().reduce(function(accum, current){
+         if(!current.moveComplete){
+            return accum + 1;
+         }else{
+            return accum;
+         }
+      }, 0);
    }
 
    me.runAI = function(){

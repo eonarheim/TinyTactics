@@ -1,3 +1,10 @@
+var UnitActions = {
+   Start: "Start",
+   Move: "Move",
+   Attack: "Attack",
+   Wait: "Wait"
+}
+
 var Unit = ex.Actor.extend({
    constructor: function(spriteSheet, engine, health, range, attackRange, owner){
       // Call the super constructor
@@ -8,11 +15,37 @@ var Unit = ex.Actor.extend({
       this.range = range;
       this.attackRange = attackRange;
 
+      this.moveComplete = false;
+
+      // Declare unit specific fsm
+      this.actionFsm = new TypeState.FiniteStateMachine(UnitActions.Start);
+      this.actionFsm.from(UnitActions.Start).to(UnitActions.Move);
+      this.actionFsm.from(UnitActions.Move).to(UnitActions.Attack);
+      this.actionFsm.from(UnitActions.Start).to(UnitActions.Attack);
+      this.actionFsm.fromAny(UnitActions).to(UnitActions.Wait);
+      this.actionFsm.from(UnitActions.Wait).to(UnitActions.Start);
+
+      this.actionFsm.onEnter(UnitActions.Wait, function(){
+         this.moveComplete = true;
+      });
+
+      this.actionFsm.onEnter(UnitActions.Start, function(){
+         this.moveComplete = false;
+      });
+
+
+
       this.heartSheet = heartSheet;
       this.anchor = new ex.Point(.5, 1);
       var animation = spriteSheet.getAnimationForAll(engine, 200);
       animation.loop = true;
+      var darkerAnimation = spriteSheet.getAnimationForAll(engine, 200);
+      darkerAnimation.addEffect(new ex.Effects.Colorize(ex.Color.Black));
+      darkerAnimation.loop = true;
+      
       this.addDrawing("default", animation);
+      this.addDrawing("darker", darkerAnimation);
+
       this.setCenterDrawing(true);
 
       this.pipeline = [];
@@ -47,6 +80,14 @@ var Unit = ex.Actor.extend({
       }
       return [];
 
+   },
+   update: function(engine, delta){
+      ex.Actor.prototype.update.apply(this, [engine, delta]);
+      if(this.moveComplete){
+         this.setDrawing("darker");
+      }else{
+         this.setDrawing("default");
+      }
    },
    draw: function(ctx, delta){
       // Call super draw

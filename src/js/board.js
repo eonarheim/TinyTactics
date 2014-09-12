@@ -16,11 +16,33 @@ var Board = ex.Actor.extend({
       this.width =  (tileWidth + margin) * cols;
       this.height =  (tileHeight + margin) * rows;
 
-      // Current selection
       this.selection = null;
-      this.moveMode = false;
+      this.currentUnit = null;
       this.currentUnitRange = [];
       this.currentUnitPath = [];
+
+      // Current selection
+      this.selectionFsm = selectionFsm;
+      var that = this;
+      this.selectionFsm.onEnter(SelectionStates.NoSelection, function(){
+         that.selection = null;
+         that.currentUnit = null;
+         that.currentUnitRange = [];
+         that.currentUnitPath = [];
+         return true;
+      });
+
+      this.selectionFsm.onEnter(SelectionStates.UnitHighlighted, function () {
+         if(!that.turnManager.canMoveUnit(that.currentUnit)){
+            return false;
+         }
+
+         that.currentUnitRange = that.currentUnit.getMovementRange();                  
+         Resources.SelectSound.play();
+         return true;
+      });
+
+            
       
       // Draw params
       this.tileWidth = tileWidth;
@@ -43,32 +65,35 @@ var Board = ex.Actor.extend({
       this.pipeline.push(new ex.EventPropagationModule());
 
       // Initialize click events
-      // TODO THIS SUCKS!!!!  FIX IT     
       this.on('click', function(click){
-         var cell = this.getCellFromClick(click.x, click.y);
-         //console.log('Cell clicked', cell);
-         if(this.selection != cell){
-            if(this.turnManager.canMoveUnit(cell.unit) || this.moveMode){
-               if(cell && cell.unit){
-                     this.currentUnitRange = cell.unit.getMovementRange();
-                     this.moveMode = true;
-                     Resources.SelectSound.play();
-               }else if(this.moveMode){
-                  if(this.currentUnitPath.indexOf(cell) > -1){
-                     this.moveSelectedUnit(cell); 
-                  }
+         if(this.selectionFsm.currentState !== SelectionStates.UnitMoving){
+            var cell = this.getCellFromClick(click.x, click.y);             
+
+            if(this.selectionFsm.canGo(SelectionStates.UnitHighlighted)){               
+               if(cell && cell.unit && !cell.unit.moveComplete){
+                  this.currentUnit = cell.unit;
+                  this.selectionFsm.go(SelectionStates.UnitHighlighted);
+                  return;
                }
-               this.selection = cell;
             }
-         }else{
-            this.selection = null;
-         }
+
+            if(this.selectionFsm.canGo(SelectionStates.UnitMoving)){
+               if(this.currentUnitPath.indexOf(cell) > -1){
+                  this.selectionFsm.go(SelectionStates.UnitMoving);       
+                  this.moveSelectedUnit(cell);           
+                  return;
+               }
+            }
+
+            // If anything else happens go to no selection
+            this.selectionFsm.go(SelectionStates.NoSelection);
+         }       
       });
 
       this.on('mousemove', function(mouse){
          var cell = this.getCellFromClick(mouse.x, mouse.y);
-         if(this.selection && this.selection.unit && cell && this.currentUnitRange.indexOf(cell) > -1){
-            this.currentUnitPath = this.findPath(this.selection, cell);
+         if(this.currentUnit && cell && this.currentUnitRange.indexOf(cell) > -1){
+            this.currentUnitPath = this.findPath(this.currentUnit.cell, cell);
 
          }else{
             this.currentUnitPath = [];
@@ -111,6 +136,7 @@ var Board = ex.Actor.extend({
       if(potentialCell) return potentialCell.unit;
       return null;
    },
+   
    setUnit: function(x, y, unit){
       unit.cell.unit = null;
       unit.cell = null;
@@ -120,31 +146,24 @@ var Board = ex.Actor.extend({
       unit.cell = this.cells[index];
       this.cells[index].unit = unit;
    },
+
    moveSelectedUnit: function(destCell){
       var that = this;
       var destCell = destCell;
       this.currentUnitPath.forEach(function(cell){
          var cellCenter = cell.getCenterPoint();
-         that.selection.unit.moveTo(cellCenter.x, cellCenter.y, 80);
-         that.selection.unit.callMethod(function(){
+         that.currentUnit.moveTo(cellCenter.x, cellCenter.y, 80);
+         that.currentUnit.callMethod(function(){
             Resources.MoveSound.play();
          });
-         that.selection.unit.delay(100);
+         that.currentUnit.delay(100);
       });
-      this.selection.unit.callMethod(function(){
+      this.currentUnit.callMethod(function(){
+         this.moveComplete = true;
          that.setUnit(destCell.x, destCell.y, this);
-         that.moveMode = false;
-         that.currentUnitPath = [];
-         that.currentUnitRange = [];
-         that.selection = null;
-      
-         //console.log("Done moving unit to", destCell, "from", that.selection);
+         that.selectionFsm.go(SelectionStates.NoSelection);
       });
-      this.turnManager.currentTurnMovedUnits.push(this.selection.unit);
-      if(this.turnManager.getMovesLeft()===0){
-         this.turnManager.endTurn();
-      }
-     
+           
    },
 
    findPath: function(startCell, endCell){
@@ -262,8 +281,8 @@ var Board = ex.Actor.extend({
      
 
       // Draw movement range of unit
-      if(this.selection && this.selection.unit){
-         this.selection.unit.getMovementRange().forEach(function(cell){
+      if(this.selectionFsm.currentState === SelectionStates.UnitHighlighted){
+         this.currentUnit.getMovementRange().forEach(function(cell){
             cell.drawHighlight(ctx, "light", delta);
          });
 
