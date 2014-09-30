@@ -7,9 +7,14 @@ for(key in Resources){
    loader.addResource(Resources[key]);
 }
 
+window.oncontextmenu = function (){
+   return false; // cancel default menu
+}
+
 var unitSpriteSheet = new ex.SpriteSheet(Resources.UnitSpriteSheet, 4, 1, 32, 32);
 var spiderSheet = new ex.SpriteSheet(Resources.SpiderSheet, 4, 1, 32, 32);
 var heartSheet = new ex.SpriteSheet(Resources.HeartSheet, 6, 1, 32, 32);
+var UISheet = new ex.SpriteSheet(Resources.UISheet, 4, 1, 32, 32);
 var terrainSheet = new ex.SpriteSheet(Resources.TerrainSheet, 5, 5, 32, 32);
 var cloudSheet = new ex.SpriteSheet(Resources.CloudSheet, 1, 1, 100, 100);
 var highlightSheet = new ex.SpriteSheet(Resources.HighlightSheet, 5, 1, 32, 32);
@@ -38,7 +43,7 @@ game.camera.setFocus(board.getCenter().x, board.getCenter().y);
 
 game.on('keydown', function(e){
    if(e.key === ex.InputKey.D){
-      game.isDebug = true;
+      game.isDebug = !game.isDebug;
    }
 })
 

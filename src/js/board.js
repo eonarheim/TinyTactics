@@ -1,3 +1,9 @@
+var MouseButton = {
+   Left : 1,
+   Middle : 2,
+   Right : 3,
+}
+
 // Tiny Tactics board structure
 var Board = ex.Actor.extend({
    constructor: function(tileWidth, tileHeight, margin, rows, cols){
@@ -6,6 +12,9 @@ var Board = ex.Actor.extend({
 
       // Turn managment
       this.turnManager = null;
+
+      // Unit UI
+      this.unitUI = new UnitUI();
 
       // TODO: Fix this crap
       this.anchor = new ex.Point(0, 0);
@@ -19,6 +28,7 @@ var Board = ex.Actor.extend({
       this.selection = null;
       this.currentUnit = null;
       this.currentUnitRange = [];
+      this.currentUnitAttack = [];
       this.currentUnitPath = [];
 
       // Current selection
@@ -26,19 +36,72 @@ var Board = ex.Actor.extend({
       var that = this;
       this.selectionFsm.onEnter(SelectionStates.NoSelection, function(){
          that.selection = null;
+         
          that.currentUnit = null;
          that.currentUnitRange = [];
+         this.currentUnitAttack = [];
          that.currentUnitPath = [];
          return true;
       });
 
-      this.selectionFsm.onEnter(SelectionStates.UnitHighlighted, function () {
+      this.selectionFsm.onEnter(SelectionStates.Selection, function () {
          if(!that.turnManager.canMoveUnit(that.currentUnit)){
             return false;
+         }         
+
+         that.currentUnitRange = that.currentUnit.getMovementRange();  
+         that.currentUnitAttack = that.currentUnit.getAttackRange();                
+         Resources.SelectSound.play();
+         return true;
+      });
+
+      this.selectionFsm.on(SelectionStates.Confirm, function(entryState){
+         if(entryState === SelectionStates.Attack){
+            that.selectionFsm.go(SelectionStates.NoSelection);
+         }
+      })
+
+      // If the unit has not attacked it may enter the attack selection state
+      this.selectionFsm.onEnter(SelectionStates.Attack, function(){
+         var isAbleToAttack = !that.currentUnit.attackComplete;
+         if(!isAbleToAttack){
+            console.log("CANT ATTACK");
+         }
+         return isAbleToAttack;
+      });
+
+      // If the unit has not attacked or moved it may enter the move selection state
+      this.selectionFsm.onEnter(SelectionStates.Move, function(){
+         var isAbleToMove = !that.currentUnit.attackComplete && !that.currentUnit.moveComplete;
+         if(!isAbleToMove){
+            console.log("CANT MOVE");
+         }
+         return isAbleToMove;
+      });
+
+      this.selectionFsm.onEnter(SelectionStates.Confirm, function(entryState){
+         if(entryState === SelectionStates.Attack){
+            // todo attack other valid unit;
+            var attackUnit = that.attackSelectedUnit(that.selection);
+            if(attackUnit){
+               that.currentUnit.actionComplete = true;   
+            }            
          }
 
-         that.currentUnitRange = that.currentUnit.getMovementRange();                  
-         Resources.SelectSound.play();
+         if(entryState === SelectionStates.Move){
+            // has moved may attack other unit
+            var complete = that.moveSelectedUnit(that.selection);
+            complete.then(function(){
+               that.currentUnitAttack = that.currentUnit.getAttackRange();
+               that.selectionFsm.go(SelectionStates.Attack);
+            });            
+         }
+
+         return true;
+      });
+
+      this.selectionFsm.onEnter(SelectionStates.Cancel, function(entryState){
+         // move unit
          return true;
       });
 
@@ -66,28 +129,76 @@ var Board = ex.Actor.extend({
 
       // Initialize click events
       this.on('click', function(click){
-         if(this.selectionFsm.currentState !== SelectionStates.UnitMoving){
-            var cell = this.getCellFromClick(click.x, click.y);             
+         // Discover the mouseclick
+         var button = null;
+         if ("which" in click.mouseEvent) {  // Gecko (Firefox), WebKit (Safari/Chrome) & Opera
+            button = (click.mouseEvent.which == MouseButton.Right)?MouseButton.Right:MouseButton.Left; 
+         } else if ("button" in click.mouseEvent) {  // IE, Opera 
+            button = (click.mouseEvent.button == 2)?MouseButton.Right:MouseButton.Left; 
+         }
 
-            if(this.selectionFsm.canGo(SelectionStates.UnitHighlighted)){               
-               if(cell && cell.unit && !cell.unit.moveComplete){
-                  this.currentUnit = cell.unit;
-                  this.selectionFsm.go(SelectionStates.UnitHighlighted);
-                  return;
-               }
+
+         // If the left mouse button is clicked
+         if(button === MouseButton.Left){
+            
+            var cell = this.getCellFromClick(click.x, click.y);             
+           
+            // Unit selected
+            if(cell && cell.unit &&
+             this.turnManager.canMoveUnit(cell.unit) && 
+             this.selectionFsm.currentState === SelectionStates.NoSelection){
+               this.currentUnit = cell.unit;              
+               this.selectionFsm.go(SelectionStates.Selection);
+               return;
             }
 
-            if(this.selectionFsm.canGo(SelectionStates.UnitMoving)){
-               if(this.currentUnitPath.indexOf(cell) > -1){
-                  this.selectionFsm.go(SelectionStates.UnitMoving);       
-                  this.moveSelectedUnit(cell);           
+            if(this.selectionFsm.currentState === SelectionStates.Selection){
+               var selection = this.unitUI.getSelection(click.x, click.y);
+               if(selection === "Attack"){
+                  this.selectionFsm.go(SelectionStates.Attack);
                   return;
                }
+
+               if(selection === "Move"){                  
+                  this.selectionFsm.go(SelectionStates.Move);
+                  return;
+               }
+
+               if(selection === "Wait"){
+                  this.currentUnit.done();
+                  this.selectionFsm.go(SelectionStates.NoSelection);
+               }
+
+               this.selectionFsm.go(SelectionStates.NoSelection);
+               return;
+            }
+
+            if(this.selectionFsm.currentState === SelectionStates.Attack){
+               if(this.currentUnitAttack.indexOf(cell) > -1){
+                  this.selection = cell;
+                  this.selectionFsm.go(SelectionStates.Confirm);
+               }else{
+                  this.selectionFsm.go(SelectionStates.Cancel);
+               }
+               return;
+            }
+
+            if(this.selectionFsm.currentState === SelectionStates.Move){
+               if(this.currentUnitRange.indexOf(cell) > -1){
+                  this.selection = cell;
+                  this.selectionFsm.go(SelectionStates.Confirm);
+               }else{
+                  this.selectionFsm.go(SelectionStates.Cancel);
+               }
+
+               return;
             }
 
             // If anything else happens go to no selection
             this.selectionFsm.go(SelectionStates.NoSelection);
-         }       
+         
+         }
+
       });
 
       this.on('mousemove', function(mouse){
@@ -104,6 +215,7 @@ var Board = ex.Actor.extend({
    addUnit: function(x, y, unit){
       var cell = this.cells[x + y * this.cols];
       unit.cell = cell;
+      unit.board = this;
       cell.unit = unit;
       unit.x = x * (this.tileWidth + this.margin) + this.tileWidth/2 + this.margin;
       unit.y = y * (this.tileHeight + this.margin) + this.tileHeight/2 + this.margin;
@@ -136,7 +248,7 @@ var Board = ex.Actor.extend({
       if(potentialCell) return potentialCell.unit;
       return null;
    },
-   
+
    setUnit: function(x, y, unit){
       unit.cell.unit = null;
       unit.cell = null;
@@ -147,9 +259,14 @@ var Board = ex.Actor.extend({
       this.cells[index].unit = unit;
    },
 
+   moveSelectedUnitXY: function(x, y){
+      this.moveSelectedUnit(this.getCell(x,y));
+   },
+
    moveSelectedUnit: function(destCell){
       var that = this;
       var destCell = destCell;
+      var complete = new ex.Promise();
       this.currentUnitPath.forEach(function(cell){
          var cellCenter = cell.getCenterPoint();
          that.currentUnit.moveTo(cellCenter.x, cellCenter.y, 80);
@@ -161,9 +278,20 @@ var Board = ex.Actor.extend({
       this.currentUnit.callMethod(function(){
          this.moveComplete = true;
          that.setUnit(destCell.x, destCell.y, this);
-         that.selectionFsm.go(SelectionStates.NoSelection);
+         //that.selectionFsm.go(SelectionStates.NoSelection);
+         complete.resolve();
       });
+      return complete;
            
+   },
+
+   attackSelectedUnit: function(destCell){
+
+      if(destCell.unit && this.turnManager.isEnemyUnit(destCell.unit)){
+         this.currentUnit.attack(destCell.unit);
+         return true;
+      }
+      return false;
    },
 
    findPath: function(startCell, endCell){
@@ -226,7 +354,7 @@ var Board = ex.Actor.extend({
 
          // Find the neighbors
          var neighbors = current.getNeighbors().filter(function(node){
-            return !node.solid;
+            return !node.solid && !node.unit;
          }).filter(function(node){
             return closeNodes.indexOf(node) === -1;
          });
@@ -280,8 +408,10 @@ var Board = ex.Actor.extend({
 
      
 
+      
+      
       // Draw movement range of unit
-      if(this.selectionFsm.currentState === SelectionStates.UnitHighlighted){
+      if(this.selectionFsm.currentState === SelectionStates.Move){
          this.currentUnit.getMovementRange().forEach(function(cell){
             cell.drawHighlight(ctx, "light", delta);
          });
@@ -293,10 +423,31 @@ var Board = ex.Actor.extend({
          }
       }
 
+       // Draw attack range of unit
+      if(this.selectionFsm.currentState === SelectionStates.Attack){
+         if(this.currentUnitAttack.length){
+            this.currentUnitAttack.forEach(function(cell){
+               cell.drawHighlight(ctx,"dark", delta);
+            });
+         }
+      }
+      
+
        // Draw units
       unitsToDraw.forEach(function(unit){
-          unit.draw(ctx, delta);
+         if(unit.visible){
+            unit.draw(ctx, delta);
+         }
       });
+
+      // Draw ui
+      if(this.selectionFsm.currentState === SelectionStates.Selection){
+         
+         var point = new ex.Point(this.currentUnit.x, this.currentUnit.y);
+
+         this.unitUI.draw(ctx, point.x, point.y);
+
+      }
 
       ctx.restore();
    }

@@ -26,7 +26,7 @@ var Cell = function(x, y, board){
               me.board.getCell(x, y+1),
               me.board.getCell(x-1, y),
               me.board.getCell(x, y-1)].filter(function(cell){
-               return cell !== null && !cell.unit;
+               return cell !== null;// && !cell.unit;
               });
    }
 
