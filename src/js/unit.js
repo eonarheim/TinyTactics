@@ -38,7 +38,7 @@ var Unit = ex.Actor.extend({
    },
    
    canMove: function(){
-      
+      return !this.moveComplete && !this.attackComplete;
    },
 
    canAttack: function(target){
@@ -53,6 +53,16 @@ var Unit = ex.Actor.extend({
          target.blink(140, 140, 3);
          this.attackComplete = true;
       }
+   },
+   moveTowards: function(target){
+      var closest = this.getMovementRange().reduce(function(curr, next){
+         if(curr.getDistance(target.cell) < next.getDistance(target.cell)){
+            return curr;
+         }else{
+            return next;
+         }
+      });
+      return closest;
    },
 
    move: function(cell){

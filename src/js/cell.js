@@ -17,6 +17,10 @@ var Cell = function(x, y, board){
    me.shiftDuration = 1000; //ms
    me.count = 0;
 
+   me.getDistance = function(cell){
+      return Math.abs(this.x - cell.x) + Math.abs(this.y - cell.y);
+   }
+
    me.getCenterPoint = function(){
       return new ex.Point(me.x*(board.tileWidth + board.margin) + board.tileWidth/2 +board.margin, me.y*(board.tileHeight + board.margin) + board.tileHeight/2+board.margin);
    }

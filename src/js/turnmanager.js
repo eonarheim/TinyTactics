@@ -93,6 +93,8 @@ var TurnManager = function(board, players){
          var currentScript = me._scripts[i];   
          setTimeout(currentScript, delay*i + delay);
       }
+
+      me._scripts.length = 0;
       
    }
 
@@ -104,10 +106,9 @@ var TurnManager = function(board, players){
       //check if any attacks can be made
       myUnits.forEach(function(u){    
          var targets = me.getAttackableUnitsInRange(u);     
-         if(targets.length > 0){
+         if(targets.length > 0){            
             me.addScript(function(){            
-               me.board.selection = u.cell;
-               me.board.currentUnit = u;
+               me.board.selectUnit(u);
                me.board.selectionFsm.currentState = SelectionStates.Attack;
             });
             me.addScript(function(){
@@ -115,22 +116,73 @@ var TurnManager = function(board, players){
                u.attack(targets[0]);   
             });               
          } 
-      });
+      });     
 
-      me.addScript(function(){
-         me.endTurn();
-      });
+      
+      //move closer to enemy units      
+      myUnits.forEach(function(u){
+         var destCell = u.moveTowards(enemyUnits[0]);
+         me.addScript(function(){
+            if(u.canMove()){
+               me.board.selectUnit(u);
+               me.board.selectionFsm.currentState = SelectionStates.Move;               
+               me.board.currentUnitPath = me.board.findPath(u.cell, destCell);
+            }
+         })
+         me.addScript(function(){
+            if(u.canMove()){
+               me.board.moveSelectedUnit(destCell).then(function(){
+                  me.board.selectionFsm.currentState = SelectionStates.NoSelection;
+               });
+            }   
+         });
 
-      me.playScript(300);
-      //move closer to enemy units
+         
+         me.addScript(function(){
+            var targets = me.getAttackableUnitsInRange(u);
+            if(targets.length > 0 && u.canAttack(targets[0])){            
+               me.board.selectUnit(u);
+               me.board.selectionFsm.currentState = SelectionStates.Attack;
+            }
+         });
+         me.addScript(function(){
+            var targets = me.getAttackableUnitsInRange(u);
+            if(targets.length > 0 && u.canAttack(targets[0])){
+               me.board.selectionFsm.currentState = SelectionStates.NoSelection;
+               me.board.selectUnit(u);
+               u.attack(targets[0]);   
+            }
+         });
+                      
+      });
+      
+      //check if any attacks can be made
+      myUnits.forEach(function(u){    
+         var targets = me.getAttackableUnitsInRange(u);     
+         if(targets.length > 0){            
+            me.addScript(function(){            
+               me.board.selectUnit(u);
+               me.board.selectionFsm.currentState = SelectionStates.Attack;
+            });
+            me.addScript(function(){
+               me.board.selectionFsm.currentState = SelectionStates.NoSelection;
+               u.attack(targets[0]);   
+            });               
+         } 
+      });     
+
+      
+      
 
       //attack if able
 
       //wait if must
 
       //end turn
-
-      //me.endTurn();
+      me.addScript(function(){
+         me.endTurn();
+      });
+      me.playScript(1000);
    }
 
 

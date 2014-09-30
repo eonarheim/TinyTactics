@@ -212,6 +212,13 @@ var Board = ex.Actor.extend({
       });
    },
 
+   selectUnit: function(unit){
+      this.selection = unit.cell;
+      this.currentUnit = unit;
+      this.currentUnitRange = unit.getMovementRange();  
+      this.currentUnitAttack = unit.getAttackRange();                
+      Resources.SelectSound.play();
+   },
    addUnit: function(x, y, unit){
       var cell = this.cells[x + y * this.cols];
       unit.cell = cell;

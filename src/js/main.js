@@ -55,8 +55,8 @@ game.start(loader).then(function(){
    board.addUnit(3,0, newUnit);
    board.addUnit(2,5, newUnit2);
 
-   var spider1 = new Unit(spiderSheet, game, 5, 1, 1, "Spiders");
-   var spider2 = new Unit(spiderSheet, game, 5, 1, 1, "Spiders");
+   var spider1 = new Unit(spiderSheet, game, 5, 2, 1, "Spiders");
+   var spider2 = new Unit(spiderSheet, game, 5, 2, 1, "Spiders");
    spider1.anchor = new ex.Point(.5, .75);
    spider2.anchor = new ex.Point(.5, .75);
    board.addUnit(0,0, spider1);
