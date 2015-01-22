@@ -16,6 +16,8 @@ var Board = ex.Actor.extend({
       // Unit UI
       this.unitUI = new UnitUI();
 
+      // particle emitter
+
       // TODO: Fix this crap
       this.anchor = new ex.Point(0, 0);
       this.x = 20;
@@ -278,6 +280,10 @@ var Board = ex.Actor.extend({
          var cellCenter = cell.getCenterPoint();
          that.currentUnit.moveTo(cellCenter.x, cellCenter.y, 80);
          that.currentUnit.callMethod(function(){
+            emitter.x = this.x; 
+            emitter.y = this.y;
+            console.log(this);
+            emitter.emit(5);
             Resources.MoveSound.play();
          });
          that.currentUnit.delay(100);
@@ -381,7 +387,10 @@ var Board = ex.Actor.extend({
 
       }
    },
-
+   update: function(engine, delta){
+      ex.Actor.prototype.update.apply(this, [engine, delta]);
+      emitter.update(engine, delta);
+   },
    draw: function(ctx, delta){
       ctx.save();
       ctx.translate(this.x, this.y);
@@ -439,6 +448,7 @@ var Board = ex.Actor.extend({
          }
       }
       
+      emitter.draw(ctx, delta);
 
        // Draw units
       unitsToDraw.forEach(function(unit){

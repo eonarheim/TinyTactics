@@ -6,6 +6,7 @@ var Resources = {
    TerrainSheet: new ex.Texture("img/TerrainSheet.png"),
    HighlightSheet: new ex.Texture("img/HighlightSheet.png"),
    CloudSheet: new ex.Texture("img/Cloud.png"),
+   Smoke: new ex.Texture("img/Smoke.png"),
    HitSound: new ex.Sound("snd/hit.wav"),
    MoveSound: new ex.Sound("snd/move.wav"),
    SelectSound: new ex.Sound("snd/unitselect.wav")

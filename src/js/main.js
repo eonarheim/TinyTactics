@@ -18,6 +18,7 @@ var UISheet = new ex.SpriteSheet(Resources.UISheet, 4, 1, 32, 32);
 var terrainSheet = new ex.SpriteSheet(Resources.TerrainSheet, 5, 5, 32, 32);
 var cloudSheet = new ex.SpriteSheet(Resources.CloudSheet, 1, 1, 100, 100);
 var highlightSheet = new ex.SpriteSheet(Resources.HighlightSheet, 5, 1, 32, 32);
+var smokeSheet = new ex.SpriteSheet(Resources.Smoke, 1, 1, 32, 32);
 
 var darkHighlight = highlightSheet.getAnimationForAll(game, 100);
 darkHighlight.loop = true;
@@ -33,6 +34,32 @@ lightHighlight.addEffect(new ex.Effects.Opacity(.75));
 game.add(new Cloud(800, 0));
 game.add(new Cloud(400, 300));
 game.add(new Cloud(700, 700));
+
+// Smoke particle emitter
+
+var emitter = new ex.ParticleEmitter();
+emitter.emitterType = ex.EmitterType.Circle;
+emitter.radius = 10;
+emitter.minVel = 0;
+emitter.maxVel = 96/5;
+emitter.minAngle = 0;
+emitter.maxAngle = 6.2;
+emitter.isEmitting = false;
+emitter.emitRate = 8;
+emitter.opacity = 0.5;
+emitter.fadeFlag = true;
+emitter.particleLife = 3238/3;
+emitter.maxSize = 20;
+emitter.minSize = 1;
+emitter.startSize = 2/3;
+emitter.endSize = .01/3;
+emitter.acceleration = new ex.Vector(0, -31/3);
+emitter.particleSprite = smokeSheet.getSprite(0);
+emitter.particleSprite.transformAboutPoint(new ex.Point(.5,.5));
+emitter.randomRotation = true;
+emitter.particleRotationalVelocity = Math.PI;
+
+
 
 var board = new Board(32, 32, 2, 6, 6);
 var turnManager = new TurnManager(board, ["Player", "Spiders"]);
